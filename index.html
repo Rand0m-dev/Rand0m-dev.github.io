@@ -349,11 +349,7 @@
 (function(){
 
   // ===== НАСТРОЙКИ =====
-  // Вставьте сюда токен бота и ваш chat_id, полученные через @BotFather и @userinfobot
-  const TELEGRAM_BOT_TOKEN = "8978070719:AAFPqAGR69ZqNs34jo0Tx86GV-v2iZxdifY";
-  const TELEGRAM_CHAT_ID = "282454501";
-
-  // Адрес Cloudflare Worker для оплаты через Mono Pay.
+  // Адрес Cloudflare Worker — используется и для оплаты Mono Pay, и для уведомлений в Telegram.
   // После деплоя worker'а (см. файл monopay-worker.js) вставьте сюда его адрес,
   // например: "https://booking-monopay.your-subdomain.workers.dev"
   const WORKER_URL = "https://monopay.flesh0099.workers.dev";
@@ -398,17 +394,17 @@
     }
   }
 
-  // ===== УВЕДОМЛЕНИЕ В TELEGRAM =====
+  // ===== УВЕДОМЛЕНИЕ В TELEGRAM (через Cloudflare Worker) =====
   async function sendTelegramNotification(text){
-    if (TELEGRAM_BOT_TOKEN === "ВАШ_ТОКЕН_БОТА" || TELEGRAM_CHAT_ID === "ВАШ_CHAT_ID") {
-      console.log("Telegram не настроен. Сообщение:", text);
+    if (WORKER_URL === "ВАШ_WORKER_URL") {
+      console.log("Worker не настроен. Сообщение:", text);
       return;
     }
     try{
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      await fetch(`${WORKER_URL}/notify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text })
+        body: JSON.stringify({ text: text })
       });
     }catch(e){
       console.error("Не удалось отправить уведомление в Telegram", e);
