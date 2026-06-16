@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Svitla — Бронювання простору</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:        #F5F2EC;
+    --surface:   #FDFBF7;
+    --olive:     #6B7145;
+    --olive-dk:  #4E5231;
+    --olive-lt:  #EEF0E5;
+    --ink:       #2E2C27;
+    --muted:     #8A8778;
+    --line:      rgba(107,113,69,0.15);
+    --line-md:   rgba(107,113,69,0.28);
+    --busy:      #EEECE6;
+    --busy-ink:  #B5B3A9;
+    --danger-bg: #FDF0EE;
+    --danger-ink:#A03020;
+    --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-xl: 22px;
+  }
+  *, *::before, *::after{ box-sizing: border-box; }
+  html, body{ margin:0; padding:0; }
+  body{
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .site-header{
+    background: var(--surface);
+    border-bottom: 1px solid var(--line-md);
+    padding: 1.25rem 1.5rem;
+    display: flex; align-items: center; justify-content: center; gap: 1rem;
+  }
+  .logo-circle{
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 1.5px solid var(--olive);
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface); flex-shrink: 0;
+  }
+  .logo-text{ display: flex; flex-direction: column; }
+  .logo-name{
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 600;
+    color: var(--olive-dk); line-height: 1; letter-spacing: 0.03em;
+  }
+  .logo-sub{
+    font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin-top: 3px;
+  }
+
+  /* WRAP */
+  .wrap{ max-width: 620px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+
+  /* INTRO */
+  .page-intro{ text-align: center; margin-bottom: 2rem; }
+  .page-intro h1{
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px; font-weight: 500;
+    color: var(--olive-dk); margin: 0 0 0.5rem; letter-spacing: 0.01em;
+  }
+  .page-intro p{ font-size: 14px; color: var(--muted); margin: 0 auto; max-width: 40ch; line-height: 1.7; }
+
+  /* SECTION LABEL */
+  .section-label{
+    font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase;
+    color: var(--olive); font-weight: 600; margin: 0 0 0.65rem;
+  }
+
+  /* DURATION PICKER */
+  .duration-picker{
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px; margin-bottom: 1.75rem;
+  }
+  .duration-option{
+    background: var(--surface); border: 1px solid var(--line-md);
+    border-radius: var(--r-md); padding: 0.7rem 0.5rem; text-align: center;
+    cursor: pointer; transition: border-color .15s, background .15s, transform .1s;
+  }
+  .duration-option:hover{ border-color: var(--olive); }
+  .duration-option:active{ transform: scale(0.97); }
+  .duration-option.active{ background: var(--olive-lt); border: 1.5px solid var(--olive); }
+  .dur-label{ display: block; font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+  .duration-option.active .dur-label{ color: var(--olive-dk); }
+  .dur-price{ display: block; font-size: 12px; color: var(--muted); }
+  .duration-option.active .dur-price{ color: var(--olive); }
+
+  /* DAY NAV */
+  .day-nav{
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--line-md);
+    border-radius: var(--r-lg); padding: 0.7rem 1rem; margin-bottom: 1rem;
+  }
+  .day-nav button{
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--line-md); background: transparent; color: var(--olive-dk);
+    font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .day-nav button:hover{ background: var(--olive-lt); }
+  .day-label{
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-weight: 500; color: var(--olive-dk); text-transform: capitalize;
+  }
+
+  /* LEGEND */
+  .legend{ display: flex; gap: 1.25rem; font-size: 12px; color: var(--muted); margin-bottom: 0.75rem; }
+  .legend span{ display: flex; align-items: center; gap: 6px; }
+  .dot{ width: 10px; height: 10px; border-radius: 3px; }
+  .dot.free{ background: var(--olive); }
+  .dot.busy{ background: var(--busy-ink); }
+
+  /* SLOTS */
+  .slots{ display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 7px; margin-bottom: 1rem; }
+  .slot{
+    padding: 0.65rem 0.4rem; border-radius: var(--r-md); text-align: center;
+    font-size: 13px; font-weight: 600; border: 1px solid transparent;
+    transition: transform .1s, opacity .15s;
+  }
+  .slot.free{ background: var(--olive-lt); color: var(--olive-dk); border-color: rgba(107,113,69,.3); cursor: pointer; }
+  .slot.free:hover{ opacity: .82; }
+  .slot.free:active{ transform: scale(0.97); }
+  .slot.busy{ background: var(--busy); color: var(--busy-ink); cursor: not-allowed; }
+
+  .hint{ font-size: 13px; color: var(--muted); min-height: 1.2em; margin: 0 0 1.5rem; }
+
+  /* SUCCESS */
+  .success{
+    background: var(--olive-lt); color: var(--olive-dk);
+    border: 1px solid rgba(107,113,69,.3); border-radius: var(--r-md);
+    padding: 0.9rem 1rem; font-size: 14px; font-weight: 500;
+    margin-bottom: 1rem; display: none;
+  }
+  .success.visible{ display: block; }
+
+  /* CARD */
+  .card{
+    background: var(--surface); border: 1px solid var(--line-md);
+    border-radius: var(--r-xl); padding: 1.4rem 1.25rem;
+    margin-bottom: 1rem; display: none;
+  }
+  .card.visible{ display: block; }
+  .card h2{
+    font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 500;
+    color: var(--olive-dk); margin: 0 0 0.3rem;
+  }
+  .slot-info{ font-size: 13px; color: var(--muted); margin: 0 0 1.1rem; line-height: 1.7; }
+
+  /* FIELDS */
+  .field{ margin-bottom: 0.75rem; }
+  .field label{
+    display: block; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--olive); margin-bottom: 0.35rem;
+  }
+  .field input{
+    width: 100%; padding: 0.6rem 0.8rem;
+    border: 1px solid var(--line-md); border-radius: var(--r-md);
+    font-size: 14px; background: var(--bg); color: var(--ink); font-family: inherit;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field input:focus{ outline: none; border-color: var(--olive); box-shadow: 0 0 0 3px rgba(107,113,69,.12); }
+
+  /* BUTTONS */
+  .actions{ display: flex; gap: 0.6rem; margin-top: 0.75rem; }
+  button.primary{
+    background: var(--olive); color: #fff; border: none;
+    border-radius: var(--r-md); padding: 0.65rem 1.3rem;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: opacity .15s, transform .1s;
+  }
+  button.primary:hover{ opacity: .88; }
+  button.primary:active{ transform: scale(0.98); }
+  button.primary:disabled{ opacity: .5; cursor: not-allowed; }
+  button.secondary{
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--line-md); border-radius: var(--r-md);
+    padding: 0.65rem 1.1rem; font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: inherit; transition: background .15s;
+  }
+  button.secondary:hover{ background: var(--olive-lt); }
+
+  /* ERROR */
+  .error{
+    background: var(--danger-bg); color: var(--danger-ink);
+    border-radius: var(--r-md); padding: 0.6rem 0.8rem;
+    font-size: 13px; margin-top: 0.75rem; display: none;
+  }
+  .error.visible{ display: block; }
+
+  .divider{ height: 1px; background: var(--line); margin: 1.75rem 0; }
+
+  footer{ text-align: center; font-size: 12px; color: var(--muted); margin-top: 2rem; line-height: 1.8; }
+  footer a{ color: var(--olive); text-decoration: none; }
+  footer a:hover{ text-decoration: underline; }
+
+  @media(max-width: 420px){
+    .logo-name{ font-size: 24px; }
+    .page-intro h1{ font-size: 26px; }
+    .duration-picker{ grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo-circle">
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- stem -->
+      <line x1="22" y1="9" x2="22" y2="23" stroke="#6B7145" stroke-width="1.3" stroke-linecap="round"/>
+      <!-- leaves -->
+      <path d="M22 14 C20 12 17 12 16 14 C17 15.5 20 15.5 22 14Z" fill="#6B7145" opacity="0.7"/>
+      <path d="M22 14 C24 12 27 12 28 14 C27 15.5 24 15.5 22 14Z" fill="#6B7145" opacity="0.7"/>
+      <!-- snowdrop flower -->
+      <ellipse cx="22" cy="10" rx="2.2" ry="3.2" stroke="#6B7145" stroke-width="1.1" fill="none"/>
+      <!-- flame -->
+      <path d="M22 27 C20.5 24.5 19.5 22.5 21.2 20.5 C21.7 22.5 23.2 23.5 22 27Z" fill="#6B7145"/>
+      <!-- hand / arc -->
+      <path d="M15 33 C17 31 19.5 30 22 30 C24.5 30 27 31 29 33" stroke="#6B7145" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+      <path d="M15 33 C17 35.2 19.5 36 22 36 C24.5 36 27 35.2 29 33" stroke="#6B7145" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+    </svg>
+  </div>
+  <div class="logo-text">
+    <span class="logo-name">Svitla</span>
+    <span class="logo-sub">Простір для вас</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="page-intro">
+    <h1>Оберіть час</h1>
+    <p>Вільні слоти позначені зеленим. Оберіть зручний час, залиште контакт — і ми отримаємо сповіщення про ваше бронювання.</p>
+  </div>
+
+  <p class="section-label">Тривалість</p>
+  <div class="duration-picker" id="durationPicker"></div>
+
+  <div class="day-nav">
+    <button id="prevDay" aria-label="Попередній день">&#8249;</button>
+    <div class="day-label" id="dateLabel"></div>
+    <button id="nextDay" aria-label="Наступний день">&#8250;</button>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot free"></i> Вільно</span>
+    <span><i class="dot busy"></i> Зайнято</span>
+  </div>
+
+  <div class="slots" id="slotsGrid"></div>
+  <p class="hint" id="slotsHint"></p>
+
+  <div class="success" id="successMsg"></div>
+
+  <div class="card" id="formCard">
+    <h2>Підтвердження бронювання</h2>
+    <p class="slot-info" id="selectedSlotLabel"></p>
+    <div class="field">
+      <label for="nameInput">Ваше ім'я</label>
+      <input type="text" id="nameInput" placeholder="Наприклад, Анна" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="phoneInput">Телефон</label>
+      <input type="tel" id="phoneInput" placeholder="+380" inputmode="numeric" autocomplete="tel">
+    </div>
+    <div class="actions">
+      <button class="primary" id="confirmBtn">Забронювати</button>
+      <button class="secondary" id="cancelBtn">Скасувати</button>
+    </div>
+    <p class="error" id="errorMsg"></p>
+  </div>
+
+  <div class="card" id="paymentCard">
+    <h2>Оплата</h2>
+    <p class="slot-info" id="paymentInfo"></p>
+    <div class="actions">
+      <button class="primary" id="payBtn">Оплатити через Mono Pay</button>
+    </div>
+    <p class="error" id="paymentError"></p>
+  </div>
+
+  <div class="divider"></div>
+
+  <footer>
+    Бронювання підтверджується одразу після заповнення форми.<br>
+    Питання? Пишіть нам в <a href="https://www.instagram.com/svitla_workshop/" target="_blank">Instagram @svitla_workshop</a>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+
+  // ===== НАЛАШТУВАННЯ =====
+  const WORKER_URL = "ВАШ_WORKER_URL";
+
+  const DAY_START = 9;
+  const DAY_END   = 21;
+
+  const DURATION_OPTIONS = [
+    { hours: 1,  label: '1 година',  price: 300 },
+    { hours: 2,  label: '2 години',  price: 550 },
+    { hours: 3,  label: '3 години',  price: 800 },
+    { hours: 4,  label: '4 години',  price: 1000 },
+    { hours: 12, label: 'Весь день', price: 2000, wholeDay: true }
+  ];
+
+  let selectedDuration = DURATION_OPTIONS[0];
+
+  const STORAGE_KEY = "svitla_bookings_v1";
+  function getBookings(){
+    try{ const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : {}; } catch(e){ return {}; }
+  }
+  function saveBookings(b){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(b)); return true; } catch(e){ return false; }
+  }
+
+  async function sendTelegramNotification(text){
+    if(WORKER_URL === "ВАШ_WORKER_URL"){ console.log("Worker не налаштовано:", text); return; }
+    try{ await fetch(WORKER_URL+"/notify",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text}) }); }
+    catch(e){ console.error("Telegram error",e); }
+  }
+
+  let currentDate = new Date(); currentDate.setHours(0,0,0,0);
+  let selectedRange = null;
+  let lastBooking   = null;
+
+  const dateLabel       = document.getElementById('dateLabel');
+  const slotsGrid       = document.getElementById('slotsGrid');
+  const slotsHint       = document.getElementById('slotsHint');
+  const durationPicker  = document.getElementById('durationPicker');
+  const formCard        = document.getElementById('formCard');
+  const selSlotLabel    = document.getElementById('selectedSlotLabel');
+  const nameInput       = document.getElementById('nameInput');
+  const phoneInput      = document.getElementById('phoneInput');
+  const confirmBtn      = document.getElementById('confirmBtn');
+  const cancelBtn       = document.getElementById('cancelBtn');
+  const errorMsg        = document.getElementById('errorMsg');
+  const successMsg      = document.getElementById('successMsg');
+  const paymentCard     = document.getElementById('paymentCard');
+  const paymentInfo     = document.getElementById('paymentInfo');
+  const payBtn          = document.getElementById('payBtn');
+  const paymentError    = document.getElementById('paymentError');
+
+  // Тільки цифри та + у полі телефону
+  phoneInput.addEventListener('input', () => {
+    phoneInput.value = phoneInput.value.replace(/[^\d+]/g, '');
+  });
+
+  function fmtDate(d){ return d.toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'}); }
+  function dateKey(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function fmtHour(h){ return String(h).padStart(2,'0')+':00'; }
+  function fmtPrice(p){ return p.toLocaleString('uk-UA')+'\u00a0грн'; }
+
+  function renderDurationPicker(){
+    durationPicker.innerHTML = '';
+    DURATION_OPTIONS.forEach(opt => {
+      const el = document.createElement('div');
+      el.className = 'duration-option'+(opt===selectedDuration?' active':'');
+      el.innerHTML = '<span class="dur-label">'+opt.label+'</span><span class="dur-price">'+fmtPrice(opt.price)+'</span>';
+      el.addEventListener('click', ()=>{ selectedDuration=opt; renderDurationPicker(); render(); });
+      durationPicker.appendChild(el);
+    });
+  }
+
+  function isRangeFree(bookings, dk, start, hours){
+    if(start < DAY_START || start+hours > DAY_END) return false;
+    for(let h=start; h<start+hours; h++) if(bookings[dk+'_'+h]) return false;
+    return true;
+  }
+
+  function render(){
+    dateLabel.textContent = fmtDate(currentDate);
+    const bookings = getBookings(); const dk = dateKey(currentDate); const hours = selectedDuration.hours;
+    slotsGrid.innerHTML = '';
+
+    if(selectedDuration.wholeDay){
+      const free = isRangeFree(bookings, dk, DAY_START, hours);
+      const slot = document.createElement('div');
+      slot.className = 'slot '+(free?'free':'busy');
+      slot.textContent = fmtHour(DAY_START)+'–'+fmtHour(DAY_END);
+      if(free) slot.addEventListener('click', ()=>openForm(DAY_START, DAY_START+hours));
+      slotsGrid.appendChild(slot);
+      slotsHint.textContent = free ? 'Доступна оренда простору на весь день.'
+        : 'На обраний день простір вже частково заброньовано — весь день недоступний.';
+      return;
+    }
+
+    let anyFree = false;
+    for(let h=DAY_START; h+hours<=DAY_END; h++){
+      const free = isRangeFree(bookings, dk, h, hours);
+      if(free) anyFree = true;
+      const slot = document.createElement('div');
+      slot.className = 'slot '+(free?'free':'busy');
+      slot.textContent = hours===1 ? fmtHour(h) : fmtHour(h)+'–'+fmtHour(h+hours);
+      if(free) slot.addEventListener('click', ()=>openForm(h, h+hours));
+      slotsGrid.appendChild(slot);
+    }
+    slotsHint.textContent = anyFree ? 'Оберіть час початку — кінець розраховується автоматично.'
+      : 'На обраний день немає вільних інтервалів такої тривалості.';
+  }
+
+  function openForm(start, end){
+    selectedRange = {startHour:start, endHour:end, hours:selectedDuration.hours, price:selectedDuration.price, label:selectedDuration.label};
+    selSlotLabel.innerHTML = fmtDate(currentDate)+'<br>'+fmtHour(start)+' – '+fmtHour(end)+' ('+selectedDuration.label+')<br>Вартість: '+fmtPrice(selectedDuration.price);
+    formCard.classList.add('visible');
+    successMsg.classList.remove('visible'); errorMsg.classList.remove('visible');
+    nameInput.value=''; phoneInput.value='';
+    formCard.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  cancelBtn.addEventListener('click', ()=>{ formCard.classList.remove('visible'); paymentCard.classList.remove('visible'); selectedRange=null; });
+
+  confirmBtn.addEventListener('click', async ()=>{
+    const name = nameInput.value.trim(); const phone = phoneInput.value.trim();
+    if(!name||!phone){ errorMsg.textContent="Заповніть ім'я та телефон."; errorMsg.classList.add('visible'); return; }
+
+    const bookings=getBookings(); const dk=dateKey(currentDate);
+    const {startHour,endHour,hours,price,label}=selectedRange;
+
+    if(!isRangeFree(bookings,dk,startHour,hours)){
+      errorMsg.textContent='Цей час вже зайнятий. Оберіть інший інтервал.'; errorMsg.classList.add('visible');
+      render(); formCard.classList.remove('visible'); return;
+    }
+
+    confirmBtn.disabled=true; confirmBtn.textContent='Бронюємо...';
+
+    const info={name,phone,duration:label,price,startHour,endHour,createdAt:new Date().toISOString()};
+    for(let h=startHour;h<endHour;h++) bookings[dk+'_'+h]=info;
+    saveBookings(bookings);
+
+    const tRange = fmtHour(startHour)+' – '+fmtHour(endHour);
+    await sendTelegramNotification(
+      '\uD83C\uDF3F Нове бронювання — Svitla\n'+fmtDate(currentDate)+'\n'+tRange+' ('+label+')\nВартість: '+fmtPrice(price)+"\nІм'я: "+name+'\nТелефон: '+phone
+    );
+
+    confirmBtn.disabled=false; confirmBtn.textContent='Забронювати';
+    formCard.classList.remove('visible');
+    successMsg.textContent='Бронювання підтверджено: '+fmtDate(currentDate)+', '+tRange+' ('+label+', '+fmtPrice(price)+').';
+    successMsg.classList.add('visible');
+
+    lastBooking={dateLabel:fmtDate(currentDate),timeRangeText:tRange,price,label,name,reference:dk+'_'+startHour+'-'+endHour};
+    paymentInfo.innerHTML=lastBooking.dateLabel+', '+tRange+' ('+label+')<br>До оплати: '+fmtPrice(price);
+    paymentError.classList.remove('visible'); payBtn.disabled=false; payBtn.textContent='Оплатити через Mono Pay';
+    paymentCard.classList.add('visible');
+    render();
+  });
+
+  payBtn.addEventListener('click', async ()=>{
+    if(WORKER_URL==="ВАШ_WORKER_URL"){ paymentError.textContent='Оплата ще не налаштована.'; paymentError.classList.add('visible'); return; }
+    payBtn.disabled=true; payBtn.textContent='Створюємо рахунок...'; paymentError.classList.remove('visible');
+    try{
+      const res = await fetch(WORKER_URL+'/create-invoice',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({amount:lastBooking.price, description:'Оренда простору Svitla: '+lastBooking.dateLabel+', '+lastBooking.timeRangeText+' ('+lastBooking.label+')', reference:lastBooking.reference})
+      });
+      const data=await res.json();
+      if(!res.ok||!data.pageUrl) throw new Error(data.error||'Помилка');
+      window.open(data.pageUrl,'_blank');
+      payBtn.textContent='Відкрити оплату ще раз'; payBtn.disabled=false;
+    }catch(e){
+      paymentError.textContent='Не вдалося створити рахунок. Спробуйте пізніше.'; paymentError.classList.add('visible');
+      payBtn.disabled=false; payBtn.textContent='Оплатити через Mono Pay';
+    }
+  });
+
+  document.getElementById('prevDay').addEventListener('click',()=>{ currentDate.setDate(currentDate.getDate()-1); render(); });
+  document.getElementById('nextDay').addEventListener('click',()=>{ currentDate.setDate(currentDate.getDate()+1); render(); });
+
+  renderDurationPicker();
+  render();
+})();
+</script>
+</body>
+</html>
