@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Svitla — Адмін</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F2EC; --surface:#FDFBF7; --olive:#6B7145; --olive-dk:#4E5231;
+    --olive-lt:#EEF0E5; --ink:#2E2C27; --muted:#8A8778;
+    --line:rgba(107,113,69,0.15); --line-md:rgba(107,113,69,0.28);
+    --danger:#A03020; --danger-bg:#FDF0EE; --danger-lt:#F5E0DC;
+    --success-bg:#EEF0E5; --blocked:#FFF3CD; --blocked-ink:#7A5F00;
+    --r-md:10px; --r-lg:16px; --r-xl:22px;
+  }
+  *, *::before, *::after{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{ font-family:'Inter',sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; }
+
+  /* LOGIN */
+  .login-wrap{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem;
+  }
+  .login-card{
+    background:var(--surface); border:1px solid var(--line-md); border-radius:var(--r-xl);
+    padding:2rem 1.75rem; width:100%; max-width:360px; text-align:center;
+  }
+  .login-card h1{
+    font-family:'Cormorant Garamond',serif; font-size:26px; color:var(--olive-dk); margin:0 0 0.25rem;
+  }
+  .login-card p{ font-size:13px; color:var(--muted); margin:0 0 1.5rem; }
+  .login-card input{
+    width:100%; padding:0.65rem 0.9rem; border:1px solid var(--line-md);
+    border-radius:var(--r-md); font-size:15px; font-family:inherit;
+    background:var(--bg); color:var(--ink); margin-bottom:0.75rem;
+  }
+  .login-card input:focus{ outline:none; border-color:var(--olive); box-shadow:0 0 0 3px rgba(107,113,69,.12); }
+  .login-error{ color:var(--danger); font-size:13px; margin-bottom:0.5rem; display:none; }
+  .login-error.visible{ display:block; }
+
+  /* HEADER */
+  .adm-header{
+    background:var(--surface); border-bottom:1px solid var(--line-md);
+    padding:0.9rem 1.5rem; display:flex; align-items:center; justify-content:space-between;
+  }
+  .adm-header-left{ display:flex; align-items:center; gap:0.75rem; }
+  .adm-title{ font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--olive-dk); font-weight:600; }
+  .adm-badge{
+    font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+    background:var(--olive-lt); color:var(--olive); padding:2px 8px; border-radius:20px;
+  }
+  .logout-btn{
+    background:transparent; border:1px solid var(--line-md); border-radius:var(--r-md);
+    padding:0.4rem 0.9rem; font-size:13px; color:var(--muted); cursor:pointer; font-family:inherit;
+  }
+  .logout-btn:hover{ background:var(--bg); }
+
+  /* MAIN */
+  .adm-wrap{ max-width:800px; margin:0 auto; padding:1.75rem 1.25rem 4rem; }
+
+  /* DATE NAV */
+  .date-nav{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--surface); border:1px solid var(--line-md); border-radius:var(--r-lg);
+    padding:0.7rem 1rem; margin-bottom:1.25rem;
+  }
+  .date-nav button{
+    width:34px; height:34px; border-radius:50%; border:1px solid var(--line-md);
+    background:transparent; color:var(--olive-dk); font-size:17px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .date-nav button:hover{ background:var(--olive-lt); }
+  .date-title{ font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--olive-dk); font-weight:500; text-transform:capitalize; }
+
+  /* BLOCK DAY BAR */
+  .day-actions{
+    display:flex; gap:8px; margin-bottom:1.25rem; flex-wrap:wrap;
+  }
+
+  /* SLOTS TABLE */
+  .slots-table{ display:flex; flex-direction:column; gap:6px; margin-bottom:1.5rem; }
+  .slot-row{
+    background:var(--surface); border:1px solid var(--line-md); border-radius:var(--r-md);
+    padding:0.75rem 1rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;
+  }
+  .slot-row.booked{ border-color:rgba(107,113,69,.35); background:var(--olive-lt); }
+  .slot-row.blocked{ border-color:#C9A84C; background:var(--blocked); }
+  .slot-row.free{ opacity:0.5; }
+  .slot-time{ font-weight:600; font-size:14px; min-width:80px; color:var(--olive-dk); }
+  .slot-info{ flex:1; font-size:13px; color:var(--ink); }
+  .slot-info .name{ font-weight:600; }
+  .slot-info .detail{ color:var(--muted); }
+  .slot-tag{
+    font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
+    padding:2px 8px; border-radius:20px;
+  }
+  .slot-tag.booked{ background:var(--olive); color:#fff; }
+  .slot-tag.blocked{ background:#C9A84C; color:#fff; }
+  .slot-tag.free{ background:var(--line-md); color:var(--muted); }
+  .slot-actions{ display:flex; gap:6px; }
+
+  /* BLOCK FORM */
+  .block-form{
+    background:var(--surface); border:1px solid var(--line-md); border-radius:var(--r-xl);
+    padding:1.25rem; margin-bottom:1.25rem;
+  }
+  .block-form h3{ font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--olive-dk); margin:0 0 1rem; }
+  .form-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:0.75rem; }
+  .form-group{ display:flex; flex-direction:column; gap:4px; }
+  .form-group label{ font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--olive); }
+  .form-group select, .form-group input{
+    padding:0.55rem 0.75rem; border:1px solid var(--line-md); border-radius:var(--r-md);
+    font-size:14px; font-family:inherit; background:var(--bg); color:var(--ink);
+  }
+  .form-group select:focus, .form-group input:focus{ outline:none; border-color:var(--olive); }
+
+  /* TOAST */
+  .toast{
+    position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:0.7rem 1.25rem; border-radius:var(--r-md);
+    font-size:14px; font-weight:500; z-index:999; opacity:0;
+    transition:opacity .25s ease; pointer-events:none;
+  }
+  .toast.visible{ opacity:1; }
+
+  /* BUTTONS */
+  button.primary{
+    background:var(--olive); color:#fff; border:none; border-radius:var(--r-md);
+    padding:0.6rem 1.1rem; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
+    transition:opacity .15s;
+  }
+  button.primary:hover{ opacity:.88; }
+  button.primary:disabled{ opacity:.5; cursor:not-allowed; }
+  button.danger{
+    background:var(--danger-bg); color:var(--danger); border:1px solid rgba(160,48,32,.2);
+    border-radius:var(--r-md); padding:0.5rem 0.9rem; font-size:12px; font-weight:600;
+    cursor:pointer; font-family:inherit; transition:background .15s;
+  }
+  button.danger:hover{ background:var(--danger-lt); }
+  button.warn{
+    background:var(--blocked); color:var(--blocked-ink); border:1px solid rgba(201,168,76,.4);
+    border-radius:var(--r-md); padding:0.5rem 0.9rem; font-size:12px; font-weight:600;
+    cursor:pointer; font-family:inherit;
+  }
+  button.secondary{
+    background:transparent; color:var(--ink); border:1px solid var(--line-md);
+    border-radius:var(--r-md); padding:0.6rem 1rem; font-size:13px; font-weight:500;
+    cursor:pointer; font-family:inherit;
+  }
+  button.secondary:hover{ background:var(--olive-lt); }
+
+  .section-label{ font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:var(--olive); font-weight:600; margin:0 0 .65rem; }
+  .empty{ text-align:center; color:var(--muted); font-size:14px; padding:2rem 0; }
+
+  #loginSection{ display:block; }
+  #adminSection{ display:none; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginSection">
+  <div class="login-wrap">
+    <div class="login-card">
+      <h1>Svitla</h1>
+      <p>Адмін-панель</p>
+      <input type="password" id="passwordInput" placeholder="Пароль" autocomplete="current-password">
+      <p class="login-error" id="loginError">Невірний пароль</p>
+      <button class="primary" style="width:100%" id="loginBtn">Увійти</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminSection">
+  <div class="adm-header">
+    <div class="adm-header-left">
+      <span class="adm-title">Svitla</span>
+      <span class="adm-badge">Адмін</span>
+    </div>
+    <button class="logout-btn" id="logoutBtn">Вийти</button>
+  </div>
+
+  <div class="adm-wrap">
+
+    <!-- DATE NAV -->
+    <div class="date-nav">
+      <button id="prevDay">&#8249;</button>
+      <div class="date-title" id="dateTitle"></div>
+      <button id="nextDay">&#8250;</button>
+    </div>
+
+    <!-- DAY ACTIONS -->
+    <div class="day-actions">
+      <button class="warn" id="blockDayBtn">🔒 Заблокувати весь день</button>
+      <button class="secondary" id="unblockDayBtn">🔓 Розблокувати весь день</button>
+    </div>
+
+    <!-- SLOTS -->
+    <p class="section-label">Слоти дня</p>
+    <div class="slots-table" id="slotsTable">
+      <div class="empty">Завантаження...</div>
+    </div>
+
+    <!-- BLOCK FORM -->
+    <div class="block-form">
+      <h3>Заблокувати години</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>З</label>
+          <select id="blockFrom"></select>
+        </div>
+        <div class="form-group">
+          <label>До</label>
+          <select id="blockTo"></select>
+        </div>
+        <div class="form-group" style="flex:1; min-width:150px;">
+          <label>Причина (необов'язково)</label>
+          <input type="text" id="blockReason" placeholder="Наприклад: технічні роботи">
+        </div>
+        <button class="warn" id="blockRangeBtn" style="align-self:flex-end;">🔒 Заблокувати</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  // ===== НАЛАШТУВАННЯ =====
+  const WORKER_URL = "ВАШ_WORKER_URL"; // наприклад "https://monopay.flesh0099.workers.dev"
+  const DAY_START = 9;
+  const DAY_END   = 21;
+
+  let adminPassword = "";
+  let currentDate = new Date(); currentDate.setHours(0,0,0,0);
+
+  // ── LOGIN ──
+  const loginSection = document.getElementById('loginSection');
+  const adminSection = document.getElementById('adminSection');
+  const passwordInput = document.getElementById('passwordInput');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginError = document.getElementById('loginError');
+
+  passwordInput.addEventListener('keydown', e => { if(e.key==='Enter') loginBtn.click(); });
+
+  loginBtn.addEventListener('click', async () => {
+    const pwd = passwordInput.value.trim();
+    if(!pwd){ loginError.classList.add('visible'); return; }
+    loginBtn.disabled = true; loginBtn.textContent = 'Перевірка...';
+    // Перевіряємо пароль запитом до адмін-ендпоінту
+    try {
+      const res = await adminFetch('GET', '/admin/bookings?date=' + dateKey(currentDate), null, pwd);
+      if(res.status === 401){ loginError.classList.add('visible'); loginBtn.disabled=false; loginBtn.textContent='Увійти'; return; }
+      adminPassword = pwd;
+      loginSection.style.display = 'none';
+      adminSection.style.display = 'block';
+      initAdmin();
+    } catch(e) {
+      loginError.textContent = 'Помилка з\'єднання з сервером';
+      loginError.classList.add('visible');
+    }
+    loginBtn.disabled=false; loginBtn.textContent='Увійти';
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    adminPassword = "";
+    adminSection.style.display = 'none';
+    loginSection.style.display = 'block';
+    passwordInput.value = '';
+  });
+
+  // ── INIT ──
+  function initAdmin(){
+    populateBlockSelects();
+    renderDateTitle();
+    loadSlots();
+
+    document.getElementById('prevDay').addEventListener('click', () => { currentDate.setDate(currentDate.getDate()-1); renderDateTitle(); loadSlots(); });
+    document.getElementById('nextDay').addEventListener('click', () => { currentDate.setDate(currentDate.getDate()+1); renderDateTitle(); loadSlots(); });
+
+    document.getElementById('blockDayBtn').addEventListener('click', async () => {
+      if(!confirm('Заблокувати весь день ' + fmtDate(currentDate) + '?')) return;
+      const reason = prompt('Причина блокування (необов\'язково):') || 'Вихідний';
+      await adminFetch('POST', '/admin/block-day', { date: dateKey(currentDate), reason });
+      toast('День заброльовано'); loadSlots();
+    });
+
+    document.getElementById('unblockDayBtn').addEventListener('click', async () => {
+      if(!confirm('Розблокувати весь день та скасувати всі бронювання?')) return;
+      await adminFetch('POST', '/admin/unblock-day', { date: dateKey(currentDate) });
+      toast('День розблоковано'); loadSlots();
+    });
+
+    document.getElementById('blockRangeBtn').addEventListener('click', async () => {
+      const from = parseInt(document.getElementById('blockFrom').value);
+      const to   = parseInt(document.getElementById('blockTo').value);
+      const reason = document.getElementById('blockReason').value.trim() || 'Заблоковано';
+      if(from >= to){ toast('Час "До" має бути більшим за "З"'); return; }
+      await adminFetch('POST', '/admin/block', { date: dateKey(currentDate), startHour: from, endHour: to, reason });
+      toast('Години заблоковано'); loadSlots();
+    });
+  }
+
+  // ── SLOTS ──
+  async function loadSlots(){
+    const table = document.getElementById('slotsTable');
+    table.innerHTML = '<div class="empty">Завантаження...</div>';
+    const res = await adminFetch('GET', '/admin/bookings?date=' + dateKey(currentDate));
+    const data = await res.json();
+    const booked = data.bookedHours || {};
+    renderSlots(booked);
+  }
+
+  function renderSlots(booked){
+    const table = document.getElementById('slotsTable');
+    table.innerHTML = '';
+    let i = DAY_START;
+    while(i < DAY_END){
+      const slot = booked[i] || booked[String(i)];
+      if(slot){
+        // Show full booking block
+        const end = slot.endHour || (i+1);
+        const isBlocked = !!slot._blocked;
+        const row = document.createElement('div');
+        row.className = 'slot-row ' + (isBlocked ? 'blocked' : 'booked');
+        row.innerHTML = `
+          <div class="slot-time">${pad(i)}:00 – ${pad(end)}:00</div>
+          <div class="slot-info">
+            ${isBlocked
+              ? `<div class="name">🔒 ${slot.reason || 'Заблоковано'}</div>`
+              : `<div class="name">${slot.name}</div>
+                 <div class="detail">${slot.phone} · ${slot.label} · ${slot.price} грн</div>`
+            }
+          </div>
+          <span class="slot-tag ${isBlocked ? 'blocked' : 'booked'}">${isBlocked ? 'Блок' : 'Броня'}</span>
+          <div class="slot-actions">
+            ${isBlocked
+              ? `<button class="secondary" onclick="unblockRange(${i}, ${end})">Розблокувати</button>`
+              : `<button class="danger" onclick="cancelBooking(${i}, ${end})">Скасувати</button>`
+            }
+          </div>`;
+        table.appendChild(row);
+        i = end; // jump past this block
+      } else {
+        // Free slot
+        const row = document.createElement('div');
+        row.className = 'slot-row free';
+        row.innerHTML = `<div class="slot-time">${pad(i)}:00</div><div class="slot-info"><span class="detail">Вільно</span></div><span class="slot-tag free">Вільно</span>`;
+        table.appendChild(row);
+        i++;
+      }
+    }
+    if(!table.children.length) table.innerHTML = '<div class="empty">Немає даних</div>';
+  }
+
+  window.cancelBooking = async function(startHour, endHour){
+    if(!confirm('Скасувати бронювання ' + pad(startHour) + ':00 – ' + pad(endHour) + ':00?')) return;
+    await adminFetch('POST', '/admin/cancel', { date: dateKey(currentDate), startHour, endHour });
+    toast('Бронювання скасовано'); loadSlots();
+  };
+
+  window.unblockRange = async function(startHour, endHour){
+    if(!confirm('Розблокувати ' + pad(startHour) + ':00 – ' + pad(endHour) + ':00?')) return;
+    await adminFetch('POST', '/admin/unblock', { date: dateKey(currentDate), startHour, endHour });
+    toast('Розблоковано'); loadSlots();
+  };
+
+  // ── HELPERS ──
+  function populateBlockSelects(){
+    const from = document.getElementById('blockFrom');
+    const to   = document.getElementById('blockTo');
+    for(let h = DAY_START; h <= DAY_END; h++){
+      const o1 = document.createElement('option'); o1.value=h; o1.textContent=pad(h)+':00'; from.appendChild(o1);
+      const o2 = document.createElement('option'); o2.value=h; o2.textContent=pad(h)+':00'; to.appendChild(o2);
+    }
+    to.value = DAY_END;
+  }
+
+  function renderDateTitle(){
+    document.getElementById('dateTitle').textContent = fmtDate(currentDate);
+  }
+
+  function fmtDate(d){ return d.toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'}); }
+  function dateKey(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function adminFetch(method, path, body, pwd){
+    const headers = { 'Content-Type':'application/json', 'X-Admin-Password': pwd || adminPassword };
+    const opts = { method, headers };
+    if(body) opts.body = JSON.stringify(body);
+    return fetch(WORKER_URL + path, opts);
+  }
+
+  let toastTimer;
+  function toast(msg){
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.classList.remove('visible'), 2500);
+  }
+})();
+</script>
+</body>
+</html>
